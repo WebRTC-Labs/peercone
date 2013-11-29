@@ -1,2 +1,5 @@
 *.swp
+.gclient_entries
+chromium_deps/
 out/
+webrtc/
