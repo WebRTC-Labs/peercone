@@ -25,20 +25,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PEERCONNECTION_SAMPLES_CLIENT_MAIN_WND_H_
-#define PEERCONNECTION_SAMPLES_CLIENT_MAIN_WND_H_
-#pragma once
-
-#include <map>
-#include <string>
+#ifndef PEERCONNECTION_SAMPLES_CLIENT_LINUX_MAIN_WND_H_
+#define PEERCONNECTION_SAMPLES_CLIENT_LINUX_MAIN_WND_H_
 
 #include "talk/app/webrtc/mediastreaminterface.h"
-#include "talk/base/win32.h"
-#include "talk/media/base/mediachannel.h"
 #include "talk/media/base/videocommon.h"
 #include "talk/media/base/videoframe.h"
-#include "talk/media/base/videorenderer.h"
 
+#include "peercone/main_wnd.h"
 #include "peercone/peer_connection_client.h"
 
 class MainWndCallback {
@@ -49,9 +43,20 @@ class MainWndCallback {
   virtual void DisconnectFromCurrentPeer() = 0;
   virtual void UIThreadCallback(int msg_id, void* data) = 0;
   virtual void Close() = 0;
+
  protected:
   virtual ~MainWndCallback() {}
 };
+
+namespace {
+struct UIThreadCallbackData {
+  explicit UIThreadCallbackData(MainWndCallback* cb, int id, void* d)
+      : callback(cb), msg_id(id), data(d) {}
+  MainWndCallback* callback;
+  int msg_id;
+  void* data;
+};
+}
 
 // Pure virtual interface for the main window.
 class MainWindow {
@@ -67,7 +72,8 @@ class MainWindow {
   virtual void RegisterObserver(MainWndCallback* callback) = 0;
 
   virtual bool IsWindow() = 0;
-  virtual void MessageBox(const char* caption, const char* text,
+  virtual void MessageBox(const char* caption,
+                          const char* text,
                           bool is_error) = 0;
 
   virtual UI current_ui() = 0;
@@ -78,137 +84,72 @@ class MainWindow {
 
   virtual void StartLocalRenderer(webrtc::VideoTrackInterface* local_video) = 0;
   virtual void StopLocalRenderer() = 0;
-  virtual void StartRemoteRenderer(webrtc::VideoTrackInterface* remote_video) = 0;
+  virtual void StartRemoteRenderer(
+      webrtc::VideoTrackInterface* remote_video) = 0;
   virtual void StopRemoteRenderer() = 0;
 
   virtual void QueueUIThreadCallback(int msg_id, void* data) = 0;
 };
 
-#ifdef WIN32
-
-class MainWnd : public MainWindow {
+// Implements the main UI of the peer connection client.
+// This is functionally equivalent to the MainWnd class in the Windows
+// implementation.
+class NoWindow : public MainWindow {
  public:
-  static const wchar_t kClassName[];
-
-  enum WindowMessages {
-    UI_THREAD_CALLBACK = WM_APP + 1,
-  };
-
-  MainWnd();
-  ~MainWnd();
-
-  bool Create();
-  bool Destroy();
-  bool PreTranslateMessage(MSG* msg);
+  NoWindow(const char* server, int port);
+  ~NoWindow();
 
   virtual void RegisterObserver(MainWndCallback* callback);
   virtual bool IsWindow();
   virtual void SwitchToConnectUI();
   virtual void SwitchToPeerList(const Peers& peers);
   virtual void SwitchToStreamingUI();
-  virtual void MessageBox(const char* caption, const char* text,
-                          bool is_error);
-  virtual UI current_ui() { return ui_; }
-
+  virtual void MessageBox(const char* caption, const char* text, bool is_error);
+  virtual MainWindow::UI current_ui();
   virtual void StartLocalRenderer(webrtc::VideoTrackInterface* local_video);
   virtual void StopLocalRenderer();
   virtual void StartRemoteRenderer(webrtc::VideoTrackInterface* remote_video);
   virtual void StopRemoteRenderer();
 
   virtual void QueueUIThreadCallback(int msg_id, void* data);
+  void HandleUICallbacks();
 
-  HWND handle() const { return wnd_; }
+  void Create();
 
+ protected:
   class VideoRenderer : public webrtc::VideoRendererInterface {
    public:
-    VideoRenderer(HWND wnd, int width, int height,
-                  webrtc::VideoTrackInterface* track_to_render);
-    virtual ~VideoRenderer();
-
-    void Lock() {
-      ::EnterCriticalSection(&buffer_lock_);
-    }
-
-    void Unlock() {
-      ::LeaveCriticalSection(&buffer_lock_);
-    }
-
     // VideoRendererInterface implementation
-    virtual void SetSize(int width, int height);
-    virtual void RenderFrame(const cricket::VideoFrame* frame);
+    virtual void SetSize(int width, int height) OVERRIDE;
+    virtual void RenderFrame(const cricket::VideoFrame* frame) OVERRIDE;
 
-    const BITMAPINFO& bmi() const { return bmi_; }
     const uint8* image() const { return image_.get(); }
 
-   protected:
-    enum {
-      SET_SIZE,
-      RENDER_FRAME,
-    };
+    int width() const { return width_; }
 
-    HWND wnd_;
-    BITMAPINFO bmi_;
+    int height() const { return height_; }
+
+   protected:
     talk_base::scoped_ptr<uint8[]> image_;
-    CRITICAL_SECTION buffer_lock_;
+    int width_;
+    int height_;
+    NoWindow* main_wnd_;
     talk_base::scoped_refptr<webrtc::VideoTrackInterface> rendered_track_;
   };
 
-  // A little helper class to make sure we always to proper locking and
-  // unlocking when working with VideoRenderer buffers.
-  template <typename T>
-  class AutoLock {
-   public:
-    explicit AutoLock(T* obj) : obj_(obj) { obj_->Lock(); }
-    ~AutoLock() { obj_->Unlock(); }
-   protected:
-    T* obj_;
-  };
-
  protected:
-  enum ChildWindowID {
-    EDIT_ID = 1,
-    BUTTON_ID,
-    LABEL1_ID,
-    LABEL2_ID,
-    LISTBOX_ID,
-  };
-
-  void OnPaint();
-  void OnDestroyed();
-
-  void OnDefaultAction();
-
-  bool OnMessage(UINT msg, WPARAM wp, LPARAM lp, LRESULT* result);
-
-  static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-  static bool RegisterWindowClass();
-
-  void CreateChildWindow(HWND* wnd, ChildWindowID id, const wchar_t* class_name,
-                         DWORD control_style, DWORD ex_style);
-  void CreateChildWindows();
-
-  void LayoutConnectUI(bool show);
-  void LayoutPeerListUI(bool show);
-
-  void HandleTabbing();
-
- private:
+  MainWndCallback* callback_;
+  std::string server_;
+  int port_;
+  bool autoconnect_;
+  bool autocall_;
   talk_base::scoped_ptr<VideoRenderer> local_renderer_;
   talk_base::scoped_ptr<VideoRenderer> remote_renderer_;
-  UI ui_;
-  HWND wnd_;
-  DWORD ui_thread_id_;
-  HWND edit1_;
-  HWND edit2_;
-  HWND label1_;
-  HWND label2_;
-  HWND button_;
-  HWND listbox_;
-  bool destroyed_;
-  void* nested_msg_;
-  MainWndCallback* callback_;
-  static ATOM wnd_class_;
-};
-#endif  // WIN32
+  talk_base::scoped_ptr<uint8> draw_buffer_;
+  int draw_buffer_size_;
 
-#endif  // PEERCONNECTION_SAMPLES_CLIENT_MAIN_WND_H_
+  talk_base::CriticalSection callback_lock_;
+  std::deque<UIThreadCallbackData*> callbacks_;
+};
+
+#endif  // PEERCONNECTION_SAMPLES_CLIENT_LINUX_MAIN_WND_H_

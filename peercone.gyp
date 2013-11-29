@@ -44,42 +44,19 @@
         'peercone/conductor.h',
         'peercone/defaults.cc',
         'peercone/defaults.h',
+        'peercone/main.cc',
+        'peercone/main_wnd.cc',
+        'peercone/main_wnd.h',
         'peercone/peer_connection_client.cc',
         'peercone/peer_connection_client.h',
       ],
-      'include_dirs+': [
+      'include_dirs': [
         'webrtc/',
       ],
       'dependencies': [
         '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
         'webrtc/talk/libjingle.gyp:libjingle_peerconnection',
       ],
-      'conditions': [
-        ['OS=="linux"', {
-          'sources': [
-            'peercone/linux/main.cc',
-            'peercone/linux/main_wnd.cc',
-            'peercone/linux/main_wnd.h',
-          ],
-          'cflags': [
-            '<!@(pkg-config --cflags glib-2.0 gobject-2.0 gtk+-2.0)',
-          ],
-          'link_settings': {
-            'ldflags': [
-              '<!@(pkg-config --libs-only-L --libs-only-other glib-2.0'
-               ' gobject-2.0 gthread-2.0 gtk+-2.0)',
-            ],
-            'libraries': [
-              '<!@(pkg-config --libs-only-l glib-2.0 gobject-2.0'
-                ' gthread-2.0 gtk+-2.0)',
-              '-lX11',
-              '-lXcomposite',
-              '-lXext',
-              '-lXrender',
-            ],
-          },
-        }],  # OS=="linux"
-      ],  # conditions
-    },  # target peerconnection_client
+    },
   ],
 }
