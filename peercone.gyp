@@ -30,16 +30,6 @@
         '<!@(pkg-config --cflags vlc-plugin)',
       ],
       'sources': [
-        'peercone/vlc-plugin.cc',
-      ],
-      'libraries': [
-        '<!@(pkg-config --libs vlc-plugin)',
-      ],
-    },
-    {
-      'target_name': 'peercone_cli',
-      'type': 'executable',
-      'sources': [
         'peercone/conductor.cc',
         'peercone/conductor.h',
         'peercone/defaults.cc',
@@ -49,6 +39,12 @@
         'peercone/main_wnd.h',
         'peercone/peer_connection_client.cc',
         'peercone/peer_connection_client.h',
+        'peercone/vlc_plugin.cc',
+      ],
+      'libraries': [
+        '<!@(pkg-config --libs vlc-plugin)',
+        # TODO(pbos): We don't intentionally depend on these.
+        '<!@(pkg-config --libs-only-l glib-2.0 gobject-2.0 gthread-2.0 gtk+-2.0)',
       ],
       'include_dirs': [
         'webrtc/',
