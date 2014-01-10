@@ -102,7 +102,5 @@ void NoWindow::SwitchToPeerList(const Peers& peers) {
 }
 
 void NoWindow::SwitchToStreamingUI() { LOG(INFO) << __FUNCTION__; }
-
 void NoWindow::VideoRenderer::SetSize(int width, int height) {}
 void NoWindow::VideoRenderer::RenderFrame(const cricket::VideoFrame* frame) {}
-

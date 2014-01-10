@@ -65,10 +65,13 @@ class DummySetSessionDescriptionObserver
   ~DummySetSessionDescriptionObserver() {}
 };
 
-Conductor::Conductor(PeerConnectionClient* client, MainWindow* main_wnd)
-  : peer_id_(-1),
-    client_(client),
-    main_wnd_(main_wnd) {
+Conductor::Conductor(PeerConnectionClient* client,
+                     MainWindow* main_wnd,
+                     cricket::VideoCapturer* video_capturer)
+    : peer_id_(-1),
+      client_(client),
+      main_wnd_(main_wnd),
+      video_capturer_(video_capturer) {
   client_->RegisterObserver(this);
   main_wnd->RegisterObserver(this);
 }
@@ -331,28 +334,6 @@ void Conductor::ConnectToPeer(int peer_id) {
   }
 }
 
-cricket::VideoCapturer* Conductor::OpenVideoCaptureDevice() {
-  talk_base::scoped_ptr<cricket::DeviceManagerInterface> dev_manager(
-      cricket::DeviceManagerFactory::Create());
-  if (!dev_manager->Init()) {
-    LOG(LS_ERROR) << "Can't create device manager";
-    return NULL;
-  }
-  std::vector<cricket::Device> devs;
-  if (!dev_manager->GetVideoCaptureDevices(&devs)) {
-    LOG(LS_ERROR) << "Can't enumerate video devices";
-    return NULL;
-  }
-  std::vector<cricket::Device>::iterator dev_it = devs.begin();
-  cricket::VideoCapturer* capturer = NULL;
-  for (; dev_it != devs.end(); ++dev_it) {
-    capturer = dev_manager->CreateVideoCapturer(*dev_it);
-    if (capturer != NULL)
-      break;
-  }
-  return capturer;
-}
-
 void Conductor::AddStreams() {
   if (active_streams_.find(kStreamLabel) != active_streams_.end())
     return;  // Already added.
@@ -364,7 +345,7 @@ void Conductor::AddStreams() {
   talk_base::scoped_refptr<webrtc::VideoTrackInterface> video_track(
       peer_connection_factory_->CreateVideoTrack(
           kVideoLabel,
-          peer_connection_factory_->CreateVideoSource(OpenVideoCaptureDevice(),
+          peer_connection_factory_->CreateVideoSource(video_capturer_,
                                                       NULL)));
   main_wnd_->StartLocalRenderer(video_track);
 

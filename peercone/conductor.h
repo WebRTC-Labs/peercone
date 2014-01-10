@@ -64,7 +64,9 @@ class Conductor
     STREAM_REMOVED,
   };
 
-  Conductor(PeerConnectionClient* client, MainWindow* main_wnd);
+  Conductor(PeerConnectionClient* client,
+            MainWindow* main_wnd,
+            cricket::VideoCapturer* video_capturer);
 
   bool connection_active() const;
 
@@ -76,7 +78,6 @@ class Conductor
   void DeletePeerConnection();
   void EnsureStreamingUI();
   void AddStreams();
-  cricket::VideoCapturer* OpenVideoCaptureDevice();
 
   //
   // PeerConnectionObserver implementation.
@@ -140,6 +141,8 @@ class Conductor
   std::map<std::string, talk_base::scoped_refptr<webrtc::MediaStreamInterface> >
       active_streams_;
   std::string server_;
+
+  cricket::VideoCapturer* video_capturer_;
 };
 
 #endif  // PEERCONNECTION_SAMPLES_CLIENT_CONDUCTOR_H_
