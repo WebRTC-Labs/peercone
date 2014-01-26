@@ -55,5 +55,28 @@
         'webrtc/talk/libjingle.gyp:libjingle_peerconnection',
       ],
     },
+    {
+      'target_name': 'peercone_small',
+      'type': 'executable',
+      'cflags+': [
+        '<!@(pkg-config --cflags vlc-plugin)',
+      ],
+      'sources': [
+        'peercone/fakeaudiocapturemodule.cc',
+        'peercone/peerconnectionendtoend_unittest.cc',
+        'peercone/peerconnectiontestwrapper.cc',
+      ],
+      'libraries': [
+        # TODO(pbos): We don't intentionally depend on these.
+        '<!@(pkg-config --libs-only-l glib-2.0 gobject-2.0 gthread-2.0 gtk+-2.0)',
+      ],
+      'include_dirs': [
+        'webrtc/',
+      ],
+      'dependencies': [
+        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+        'webrtc/talk/libjingle.gyp:libjingle_peerconnection',
+      ],
+    },
   ],
 }
