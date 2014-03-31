@@ -26,8 +26,9 @@
     {
       'target_name': 'peercone_plugin',
       'type': 'shared_library',
-      'cflags+': [
-        '<!@(pkg-config --cflags vlc-plugin)',
+      'cflags+': [ 
+        '-D__PLUGIN__ -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_THREAD_SAFE -I../../../vlc/include',
+        #'<!@(pkg-config --cflags vlc-plugin)',
       ],
       'sources': [
         'peercone/conductor.cc',
@@ -43,7 +44,8 @@
         'peercone/vlc_video_capturer.h',
       ],
       'libraries': [
-        '<!@(pkg-config --libs vlc-plugin)',
+        '-L../../../vlc/src/.libs -lvlccore',
+        #'<!@(pkg-config --libs vlc-plugin)',
         # TODO(pbos): We don't intentionally depend on these.
         '<!@(pkg-config --libs-only-l glib-2.0 gobject-2.0 gthread-2.0 gtk+-2.0)',
       ],
@@ -59,7 +61,8 @@
       'target_name': 'peercone_small',
       'type': 'executable',
       'cflags+': [
-        '<!@(pkg-config --cflags vlc-plugin)',
+        '-D__PLUGIN__ -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_THREAD_SAFE -I../../../vlc/include',
+        #'<!@(pkg-config --cflags vlc-plugin)',
       ],
       'sources': [
         'peercone/fakeaudiocapturemodule.cc',
@@ -67,6 +70,7 @@
         'peercone/peerconnectiontestwrapper.cc',
       ],
       'libraries': [
+        '-L../../../vlc/src/.libs -lvlccore',
         # TODO(pbos): We don't intentionally depend on these.
         '<!@(pkg-config --libs-only-l glib-2.0 gobject-2.0 gthread-2.0 gtk+-2.0)',
       ],
