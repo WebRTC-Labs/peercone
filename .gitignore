@@ -1,5 +1,7 @@
 *.swp
 .gclient_entries
 chromium_deps/
+chromium_gn/
 out/
 webrtc/
+vlc/
